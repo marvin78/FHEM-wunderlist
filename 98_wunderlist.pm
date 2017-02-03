@@ -5,7 +5,7 @@ package main;
 use strict;
 use warnings;
 use Data::Dumper; 
-use JSON; 
+use JSON;
 use MIME::Base64;
 use Encode;
 
@@ -14,16 +14,16 @@ use Encode;
 sub wunderlist_Initialize($) {
   my ($hash) = @_;
 
-  $hash->{SetFn}    = "wunderlist_Set";
-  $hash->{DefFn}    = "wunderlist_Define";
-  $hash->{UndefFn}  = "wunderlist_Undefine";
+    $hash->{SetFn}    = "wunderlist_Set";
+    $hash->{DefFn}    = "wunderlist_Define";
+    $hash->{UndefFn}  = "wunderlist_Undefine";
 	$hash->{AttrFn}   = "wunderlist_Attr";
 	$hash->{RenameFn} = "wunderlist_Rename";   
-	$hash->{CopyFn}	  = "wunderlist_Copy";   	
-	$hash->{DeleteFn}	= "wunderlist_Delete";   	
+	$hash->{CopyFn}	  = "wunderlist_Copy";
+	$hash->{DeleteFn} = "wunderlist_Delete";
 	$hash->{NotifyFn} = "wunderlist_Notify";
 	
-  $hash->{AttrList} = "disable:1,0 ".
+    $hash->{AttrList} = "disable:1,0 ".
 											"pollInterval ".
 											"do_not_notify ".
 											"sortTasks:1,2,0 ".
