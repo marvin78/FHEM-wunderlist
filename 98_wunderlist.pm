@@ -12,11 +12,11 @@ use Encode;
 
 
 sub wunderlist_Initialize($) {
-  my ($hash) = @_;
+    my ($hash) = @_;
 
     $hash->{SetFn}    = "wunderlist_Set";
-    $hash->{DefFn}    = "wunderlist_Define";
-    $hash->{UndefFn}  = "wunderlist_Undefine";
+	$hash->{DefFn}    = "wunderlist_Define";
+	$hash->{UndefFn}  = "wunderlist_Undefine";
 	$hash->{AttrFn}   = "wunderlist_Attr";
 	$hash->{RenameFn} = "wunderlist_Rename";   
 	$hash->{CopyFn}	  = "wunderlist_Copy";
@@ -34,7 +34,7 @@ sub wunderlist_Initialize($) {
 }
 
 sub wunderlist_Define($$) {
-  my ($hash, $def) = @_;
+    my ($hash, $def) = @_;
 	my $now = time();
 	my $name = $hash->{NAME}; 
   
@@ -1038,7 +1038,7 @@ sub wunderlist_sortWunderlist($) {
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_completedById",$hash->{helper}{"COMPLETED_BY_ID"}{$ID}) if ($hash->{helper}{"COMPLETED_BY_ID"}{$ID});
 		readingsBulkUpdate($hash,"Task_".sprintf("%03s",$i)."_ID",$ID);
 		
-		$hash->{helper}{"IDS"}{"Task_".$i} = {$ID};
+		$hash->{helper}{"IDS"}{"Task_".$i} = $ID;
 		$hash->{helper}{"WID"}{$ID} = $i;
 		
 		if (!$hash->{helper}{"COMPLETED_AT"}{$ID}) {
