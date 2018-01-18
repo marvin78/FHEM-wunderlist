@@ -498,8 +498,7 @@ sub wunderlist_HandleTaskCallback($$$){
   readingsEndUpdate( $hash, 1 );
 	
 	
-	RemoveInternalTimer($hash,"wunderlist_GetTasks");
-	InternalTimer(gettimeofday()+0.2, "wunderlist_GetTasks", $hash, 0); ## loop with Interval
+	wunderlist_RestartGetTimer($hash);
 	
 	return undef;
 }
