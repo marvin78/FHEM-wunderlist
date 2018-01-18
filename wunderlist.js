@@ -92,7 +92,7 @@
 		var name = $('#wunderlist_name').val();
 		$('#newEntry_' + name).on('blur keypress',function(e) {
 			if (e.type!='keypress' || e.which==13) {
-				e.preventDefault()
+				e.preventDefault();
 				var v=wunderlist_encodeParm($(this).val());
 				if (v!="") {
 					wunderlist_sendCommand('set '+ name +' addTask ' + v);
@@ -116,20 +116,25 @@
 		});
 		$('#wunderlist_' + name + '_table').on('click','span.wunderlist_task_text',function(e) {
 			var id = $(this).attr("data-id");
+			var val=$(this).html();
 			$(this).hide();
+			$("input[data-id='" + id +"']").val(val);
 			$("input[data-id='" + id +"']").show();
 			$("input[data-id='" + id +"']").focus();
 		});
 		$('#wunderlist_' + name + '_table').on('blur keypress','input.wunderlist_input',function(e) {
 			if (e.type!='keypress' || e.which==13) {
-				e.preventDefault()
+				e.preventDefault();
+				var comp = $(this).prev().html();
 				var id = $(this).attr("data-id");
 				var val = $(this).val();
 				
 				$(this).hide();
-				$("span.wunderlist_task_text[data-id='" + id +"']").html(val);
 				$("span.wunderlist_task_text[data-id='" + id +"']").show();
-				wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+				if (val != "" && comp!=val) {
+					$("span.wunderlist_task_text[data-id='" + id +"']").html(val);
+					wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+				}
 			}
 		});
 	});
