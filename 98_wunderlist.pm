@@ -1462,7 +1462,7 @@ sub wunderlist_RestartGetTimer($) {
 	my $name = $hash->{NAME};
 	
 	RemoveInternalTimer($hash, "wunderlist_GetTasks");
-	InternalTimer(gettimeofday()+0.2, "wunderlist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	InternalTimer(gettimeofday()+0.4, "wunderlist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
 	
 	return undef;
 }
