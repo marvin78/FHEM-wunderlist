@@ -1,4 +1,4 @@
-# $Id: 98_wunderlist.pm 3800 Version 0.7.3 2017-01-31 10:43:10Z marvin1978 $
+# $Id: 98_wunderlist.pm 3900 2018-01-18 09:13:10Z marvin1978 $
 
 package main;
 
@@ -9,12 +9,20 @@ use JSON;
 use MIME::Base64;
 use Encode;
 
+#######################
+# Global variables
+my $version = "1.0.1";
+
+my %gets = (
+  "version:noArg"     => "",
+); 
 
 
 sub wunderlist_Initialize($) {
-    my ($hash) = @_;
+  my ($hash) = @_;
 
-    $hash->{SetFn}    = "wunderlist_Set";
+  $hash->{SetFn}    = "wunderlist_Set";
+  $hash->{GetFn}    = "wunderlist_Get";
 	$hash->{DefFn}    = "wunderlist_Define";
 	$hash->{UndefFn}  = "wunderlist_Undefine";
 	$hash->{AttrFn}   = "wunderlist_Attr";
@@ -23,7 +31,7 @@ sub wunderlist_Initialize($) {
 	$hash->{DeleteFn} = "wunderlist_Delete";
 	$hash->{NotifyFn} = "wunderlist_Notify";
 	
-    $hash->{AttrList} = "disable:1,0 ".
+  $hash->{AttrList} = "disable:1,0 ".
 											"pollInterval ".
 											"do_not_notify ".
 											"sortTasks:1,2,0 ".
@@ -34,7 +42,7 @@ sub wunderlist_Initialize($) {
 }
 
 sub wunderlist_Define($$) {
-    my ($hash, $def) = @_;
+  my ($hash, $def) = @_;
 	my $now = time();
 	my $name = $hash->{NAME}; 
   
@@ -53,6 +61,7 @@ sub wunderlist_Define($$) {
 	$hash->{CLIENTID}=$a[2];
 	$hash->{LISTID}=$a[3];
 	$hash->{INTERVAL}=AttrVal($name,"pollInterval",undef)?AttrVal($name,"pollInterval",undef):1800;
+	$hash->{VERSION}=$version;
 	
 	## check if Access Token is needed
 	my $index = $hash->{TYPE}."_".$hash->{NAME}."_passwd";
@@ -263,6 +272,7 @@ sub wunderlist_UpdateTask($$$) {
 				tTitle		 => $title,
 				method		 => $method,
 				wType			 => $type,
+				taskId		 => $taskId,
 				timeout    => 7,
 				header 		 => {
 					"X-Access-Token" => $pwd,
@@ -312,96 +322,108 @@ sub wunderlist_CreateTask($$) {
 	## we try to send a due_date (in developement)
 	my @tmp = split( ":", join(" ",@$a) );
 	
-	my $title=$tmp[0];
+	my $title=encode_utf8($tmp[0]);
 	
+	my $check=1;
 	
-	## if no token is needed and device is not disabled, check token and get list vom wunderlist
-	if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
-		
-		## get password
-		$pwd=wunderlist_GetPwd($hash);
-		
-		if ($pwd) {
-		
-			Log3 $name,5, "$name: hash: ".Dumper($hash);
+	if (AttrVal($name,"avoidDuplicates",0) == 1 && todoist_inArray(\@{$hash->{helper}{"TITS"}},$title)) {
+		$check=-1;
+	}
+	
+	if ($check==1) {
+	
+		## if no token is needed and device is not disabled, check token and get list vom wunderlist
+		if (!$hash->{helper}{PWD_NEEDED} && !IsDisabled($name)) {
 			
-			# data array for API - we could transfer more data
-			my %datas = ("list_id"         		=> int($hash->{LISTID}),
-									 "title"          		=> $title,
-			);
+			## get password
+			$pwd=wunderlist_GetPwd($hash);
 			
-			## check for dueDate as Parameter or part of title - push to hash
-			if (!$tmp[1] && $h->{"dueDate"}) { ## parameter
-				$datas{'due_date'} = $h->{"dueDate"};
-			}
-			elsif ($tmp[1]) { ## title
-				$datas{'due_date'} = $tmp[1];
-			}
-			else {
+			if ($pwd) {
 			
-			}
-			
-			## if someone uses due_date - no problem
-			$datas{'due_date'} = $h->{"due_date"} if ($h->{"due_date"});
-			
-			## check for recurrence type - push to hash
-			if ($h->{"recurrence_type"}) {
-				$datas{'recurrence_type'} = $h->{"recurrence_type"} if ($h->{"recurrence_type"});
-				## set recurrence type to 1 if parameter not set
-				if (!$h->{"recurrence_count"} || int($h->{"recurrence_count"}) < 1) {
-					$datas{'recurrence_count'} = 1;
+				Log3 $name,5, "$name: hash: ".Dumper($hash);
+				
+				# data array for API - we could transfer more data
+				my %datas = ("list_id"         		=> int($hash->{LISTID}),
+										 "title"          		=> $title,
+				);
+				
+				## check for dueDate as Parameter or part of title - push to hash
+				if (!$tmp[1] && $h->{"dueDate"}) { ## parameter
+					$datas{'due_date'} = $h->{"dueDate"};
+				}
+				elsif ($tmp[1]) { ## title
+					$datas{'due_date'} = $tmp[1];
 				}
 				else {
-					$datas{'recurrence_count'} = int($h->{"recurrence_count"});
+				
 				}
+				
+				## if someone uses due_date - no problem
+				$datas{'due_date'} = $h->{"due_date"} if ($h->{"due_date"});
+				
+				## check for recurrence type - push to hash
+				if ($h->{"recurrence_type"}) {
+					$datas{'recurrence_type'} = $h->{"recurrence_type"} if ($h->{"recurrence_type"});
+					## set recurrence type to 1 if parameter not set
+					if (!$h->{"recurrence_count"} || int($h->{"recurrence_count"}) < 1) {
+						$datas{'recurrence_count'} = 1;
+					}
+					else {
+						$datas{'recurrence_count'} = int($h->{"recurrence_count"});
+					}
+				}
+				
+				## Task is starred? Push it to hash
+				$datas{'starred'} = \1 if ($h->{"starred"} && (int($h->{"starred"}) == 1 ||  $h->{"starred"} eq "true"));
+				
+				## Assignee set? push to hash
+				$datas{'assignee_id'} = $h->{"assignee_id"}?int($h->{"assignee_id"}):undef;
+				
+				
+				Log3 $name,5, "wunderlist ($name): Data Array sent to wunderlist API: ".Dumper(%datas);
+			
+				my $data=encode_json(\%datas);
+				
+				Log3 $name,4, "wunderlist ($name): JSON sent to wunderlist API: ".Dumper($data);
+				
+				$param = {
+					url        => "https://a.wunderlist.com/api/v1/tasks?list_id=".int($hash->{LISTID}),
+					data			 => $data,
+					tTitle		 => $title,
+					method		 => "POST",
+					wType			 => "create",
+					timeout    => 7,
+					header 		 => {
+						"X-Access-Token" => $pwd,
+						"X-Client-ID"    => $hash->{CLIENTID},
+						"Content-Type"   => "application/json",
+					},
+					hash 			 => $hash,
+					callback   => \&wunderlist_HandleTaskCallback,  ## call callback sub to work with the data we get
+				};
+				
+				Log3 $name,5, "wunderlist ($name): Param: ".Dumper($param);
+				
+				## non-blocking access to wunderlist API
+				InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
 			}
-			
-			## Task is starred? Push it to hash
-			$datas{'starred'} = \1 if ($h->{"starred"} && (int($h->{"starred"}) == 1 ||  $h->{"starred"} eq "true"));
-			
-			## Assignee set? push to hash
-			$datas{'assignee_id'} = $h->{"assignee_id"}?int($h->{"assignee_id"}):undef;
-			
-			
-			Log3 $name,5, "wunderlist ($name): Data Array sent to wunderlist API: ".Dumper(%datas);
-		
-			my $data=encode_json(\%datas);
-			
-			Log3 $name,4, "wunderlist ($name): JSON sent to wunderlist API: ".Dumper($data);
-			
-			$param = {
-				url        => "https://a.wunderlist.com/api/v1/tasks?list_id=".int($hash->{LISTID}),
-				data			 => $data,
-				tTitle		 => encode_utf8($title),
-				method		 => "POST",
-				wType			 => "create",
-				timeout    => 7,
-				header 		 => {
-					"X-Access-Token" => $pwd,
-					"X-Client-ID"    => $hash->{CLIENTID},
-					"Content-Type"   => "application/json",
-				},
-				hash 			 => $hash,
-				callback   => \&wunderlist_HandleTaskCallback,  ## call callback sub to work with the data we get
-			};
-			
-			Log3 $name,5, "wunderlist ($name): Param: ".Dumper($param);
-			
-			## non-blocking access to wunderlist API
-			InternalTimer(gettimeofday()+1, "HttpUtils_NonblockingGet", $param, 0);
+			else {
+				wunderlist_ErrorReadings($hash,"access token empty");
+			}
 		}
 		else {
-			wunderlist_ErrorReadings($hash,"access token empty");
+			if (!IsDisabled($name)) {
+				wunderlist_ErrorReadings($hash,"no access token set");
+			}
+			else {
+				wunderlist_ErrorReadings($hash,"device is disabled");
+			}
 		}
 	}
 	else {
-		if (!IsDisabled($name)) {
-			wunderlist_ErrorReadings($hash,"no access token set");
-		}
-		else {
-			wunderlist_ErrorReadings($hash,"device is disabled");
-		}
-	}
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_ErrorDialog === \"function\") wunderlist_ErrorDialog('$title is already in the list')", "")} devspec2array("WEB.*");
+		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
+	}	
 	
 	
 	return undef;
@@ -412,6 +434,8 @@ sub wunderlist_HandleTaskCallback($$$){
 	
 	my $hash = $param->{hash};
 	my $title = $param->{tTitle};
+	
+	my $taskId = $param->{taskId} if ($param->{taskId});
 	
 	my $reading = $title;
 	
@@ -427,6 +451,8 @@ sub wunderlist_HandleTaskCallback($$$){
 	
 		if ($data ne "") {
 			my @decoded_json = decode_json($data);
+			
+			$taskId = $decoded_json[0]{id} if ($decoded_json[0]{id});
 			
 			$reading .= " - ".$decoded_json[0]{id} if ($decoded_json[0]{id});
 			
@@ -447,6 +473,13 @@ sub wunderlist_HandleTaskCallback($$$){
 		## some Logging
 		Log3 $name, 4, "wunderlist ($name): successfully created new task $title" if ($param->{wType} eq "create");
 		Log3 $name, 4, "wunderlist ($name): successfully ".$param->{wType}."ed task $title";
+		
+		if ($param->{wType} =~ /(complete|delete)/) {
+			map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_removeLine === \"function\") wunderlist_removeLine('$name','$taskId')", "")} devspec2array("WEB.*");
+		}
+		if ($param->{wType} eq "create") {
+			map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_addLine === \"function\") wunderlist_addLine('$name','$taskId','$title')", "")} devspec2array("WEB.*");
+		}
 	}
 	## we got an error from the API
 	else {
@@ -464,7 +497,7 @@ sub wunderlist_HandleTaskCallback($$$){
 	
 	
 	RemoveInternalTimer($hash,"wunderlist_GetTasks");
-	InternalTimer(gettimeofday()+1, "wunderlist_GetTasks", $hash, 0); ## loop with Interval
+	InternalTimer(gettimeofday()+0.2, "wunderlist_GetTasks", $hash, 0); ## loop with Interval
 	
 	return undef;
 }
@@ -760,6 +793,8 @@ sub wunderlist_GetTasksCallback($$$){
 				$hash->{helper}{"REV"}{$taskID}=$task->{revision};
 				$hash->{helper}{"TITLE"}{$taskID}=$title;
 				$hash->{helper}{"WID"}{$taskID}=$i;
+				push @{$hash->{helper}{"TIDS"}},$taskID; # simple ID list
+				push @{$hash->{helper}{"TITS"}},$title; # simple ID list
 				
 				## set due_date if present
 				if (defined($task->{completed_at})) {
@@ -1314,6 +1349,21 @@ sub wunderlist_Set ($@) {
 	
 }
 
+sub wunderlist_Get($@) {
+  my ($hash, $name, $cmd, @args) = @_;
+  my $ret = undef;
+  
+  if ( $cmd eq "version") {
+  	$hash->{VERSION} = $version;
+    return "Version: ".$version;
+  }
+  else {
+    $ret ="$name get with unknown argument $cmd, choose one of " . join(" ", sort keys %gets);
+  }
+ 
+  return $ret;
+}
+
 #####################################
 # sets wunderlist Access Token
 sub wunderlist_setPwd($$@) {
@@ -1397,6 +1447,87 @@ sub wunderlist_Notify ($$) {
 
   return undef;
 
+}
+
+sub wunderlist_Html($;$$) {
+	my ($name,$showDueDate) = @_;
+	
+	$showDueDate=0 if (!defined($showDueDate));
+	
+	my $hash = $defs{$name};
+  my $id   = $defs{$name}{NR};
+  
+  my $ret="";
+  
+  # Javascript
+  $ret.="<script type=\"text/javascript\" src=\"$FW_ME/pgm2/wunderlist.js\"></script>";
+  
+  $ret .= "<table class=\"roomoverview\">\n";
+  
+  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"wunderlist_".$name."_table\">\n"; 
+  
+  my $i=1;
+  my $eo;
+  my $cs=3;
+  
+  if ($showDueDate) {
+		$ret .= "<tr>\n".
+						" <td class=\"col1\"> </td>\n".
+						" <td class=\"col1\">Task</td>\n".
+						" <td class=\"col3\">Due date</td>\n";
+	}
+  
+  foreach (@{$hash->{helper}{TIDS}}) {
+  	
+  	if ($i%2==0) {
+  		$eo="even";
+  	}
+  	else {
+  		$eo="odd";
+  	}
+  	
+  	
+  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
+  					"	<td class=\"col1\">\n".
+  					"		<input class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+  					"	</td>\n".
+  					"	<td class=\"col1\">\n".
+  							"<span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+  					"	</td>\n";
+  	
+  	if ($showDueDate) {
+  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
+  		$cs=4;
+  	}					
+  	
+  	$ret .= "<td class=\"col2\">\n".
+  					" <a href=\"#\" class=\"wunderlist_delete\" data-id=\"".$_."\">\n".
+  					"		x\n".
+  					" </a>\n".
+  					"</td>\n";
+  					
+    $ret .= "</tr>\n";
+    
+  	$i++;
+  }
+  
+  $ret .= "<tr class=\"".$eo."\">";
+  
+  
+  $ret .= "<td colspan=\"".$cs."\">".
+  				"	<input type=\"hidden\" id=\"wunderlist_name\" value=\"".$name."\" />\n".
+  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
+  				"</td>";
+  
+  $ret .= "</tr>";
+  
+  $ret .= "</table></td></tr>\n";
+  
+  $ret .= "</table>\n";
+  
+  return $ret;
 }
 
 1;
@@ -1546,6 +1677,14 @@ sub wunderlist_Notify ($$) {
 		<li>state<br />
 			state of the wunderlist-Device</li>
   </ul><br />
+  <a name="wunderlist_Weblink"></a>
+  <h4>Weblink</h4>
+  <ul>
+		Defines a simple weblink for a Task list.
+		<br /><br />
+		Usage:<br /><br />
+		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_Html("&lt;WUNDERLIST-DEVCICENAME&gt;")}</code>
+	</ul>
 </ul>
 
 =end html
