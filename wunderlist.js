@@ -103,7 +103,6 @@ $(document).ready(function(){
 			var id=$(this).attr('data-id');
 			wunderlist_sendCommand('set ' + name + ' completeTask ID:'+ id);
 		}
-		return false;
 	});
 	$('#wunderlist_' + name + '_table').on('click','a.wunderlist_delete',function(e) {
 		if (confirm('Are you sure?')) {
