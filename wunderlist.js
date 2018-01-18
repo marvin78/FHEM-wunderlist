@@ -127,7 +127,7 @@ $(document).ready(function(){
 			$(this).hide();
 			$("span.wunderlist_task_text[data-id='" + id +"']").html(val);
 			$("span.wunderlist_task_text[data-id='" + id +"']").show();
-			wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title=' + val);
+			wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
 		}
 	});
 });
