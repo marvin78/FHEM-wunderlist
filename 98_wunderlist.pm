@@ -36,6 +36,8 @@ sub wunderlist_Initialize($) {
 											"do_not_notify ".
 											"sortTasks:1,2,0 ".
 											"getCompleted:1,0 ".
+											"avoidDuplicates:1,0 ".
+											"listDivider ".
 											$readingFnAttributes;
 	
 	return undef;
@@ -326,7 +328,7 @@ sub wunderlist_CreateTask($$) {
 	
 	my $check=1;
 	
-	if (AttrVal($name,"avoidDuplicates",0) == 1 && todoist_inArray(\@{$hash->{helper}{"TITS"}},$title)) {
+	if (AttrVal($name,"avoidDuplicates",0) == 1 && wunderlist_inArray(\@{$hash->{helper}{"TITS"}},$title)) {
 		$check=-1;
 	}
 	
@@ -699,7 +701,7 @@ sub wunderlist_GetTasks($;$) {
 			Log3 $name,5, "wunderlist ($name): Param: ".Dumper($param);
 			
 			## non-blocking access to wunderlist API
-			InternalTimer(gettimeofday()+0.2, "HttpUtils_NonblockingGet", $param, 0);
+			InternalTimer(gettimeofday()+0.4, "HttpUtils_NonblockingGet", $param, 0);
 			
 			
 		}
@@ -837,7 +839,7 @@ sub wunderlist_GetTasksCallback($$$){
 				}
 				
 				if ($param->{completed} != 1) {
-					$lText.=", " if ($i != 0);
+					$lText.=AttrVal($name,"listDivider",", ") if ($i != 0);
 					$lText.=$title;
 				}
 				$i++;
@@ -1257,6 +1259,10 @@ sub wunderlist_Attr($@) {
 		InternalTimer(gettimeofday()+1, "wunderlist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
 	}
 	
+	if ($attrName eq "listDivider") {
+		wunderlist_RestartGetTimer($hash);
+	}
+	
 	return;
 }
 
@@ -1449,6 +1455,18 @@ sub wunderlist_Notify ($$) {
 
 }
 
+# restart timers for getTasks if active
+sub wunderlist_RestartGetTimer($) {
+	my ($hash) = @_;
+	
+	my $name = $hash->{NAME};
+	
+	RemoveInternalTimer($hash, "wunderlist_GetTasks");
+	InternalTimer(gettimeofday()+0.2, "wunderlist_GetTasks", $hash, 0) if (!IsDisabled($name) && !$hash->{helper}{PWD_NEEDED});
+	
+	return undef;
+}
+
 sub wunderlist_Html($;$$) {
 	my ($name,$showDueDate) = @_;
 	
@@ -1528,6 +1546,14 @@ sub wunderlist_Html($;$$) {
   $ret .= "</table>\n";
   
   return $ret;
+}
+
+sub wunderlist_inArray {
+  my ($arr,$search_for) = @_;
+  foreach (@$arr) {
+  	return 1 if ($_ eq $search_for);
+  }
+  return 0;
 }
 
 1;
