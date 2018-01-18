@@ -424,7 +424,7 @@ sub wunderlist_CreateTask($$) {
 	}
 	else {
 		map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_ErrorDialog === \"function\") wunderlist_ErrorDialog('$title is already in the list')", "")} devspec2array("WEB.*");
-		todoist_ErrorReadings($hash,"duplicate detected","duplicate detected");
+		wunderlist_ErrorReadings($hash,"duplicate detected");
 	}	
 	
 	
@@ -1535,7 +1535,7 @@ sub wunderlist_Html($;$$) {
   
   
   $ret .= "<td colspan=\"".$cs."\">".
-  				"	<input type=\"hidden\" id=\"wunderlist_name\" value=\"".$name."\" />\n".
+  				"	<input type=\"hidden\" class=\"wunderlist_name\" id=\"wunderlist_name_".$name."\" value=\"".$name."\" />\n".
   				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
   				"</td>";
   
@@ -1546,6 +1546,104 @@ sub wunderlist_Html($;$$) {
   $ret .= "</table>\n";
   
   return $ret;
+}
+
+sub wunderlist_AllHtml(;$$) {
+	my ($showDueDate,$showIndent) = @_;
+	
+	$showDueDate=0 if (!defined($showDueDate));
+	
+	my @devs = devspec2array("TYPE=wunderlist");
+	my $ret="";
+	
+	# Javascript
+	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/wunderlist.js\"></script>";
+	
+	my $r=0;
+	
+	my $count = @devs;
+	my $width = 100/$count;
+	
+	my $style="float:left;margin-right:10px;width:".$width;
+	
+	foreach my $name (@devs) {
+		
+		$r++;
+	
+		my $hash = $defs{$name};
+	  my $id   = $defs{$name}{NR};
+	  
+	  if ($r==$count) {
+	  	$style="float:none;";	
+	  }	
+	    
+	  $ret .= "<div style=\"".$style."\"><table class=\"roomoverview\">\n";
+	  
+	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
+	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"wunderlist_".$name."_table\">\n"; 
+	  
+	  my $i=1;
+	  my $eo;
+	  my $cs=3;
+	  
+	  if ($showDueDate) {
+			$ret .= "<tr>\n".
+							" <td class=\"col1\"> </td>\n".
+							" <td class=\"col1\">Task</td>\n".
+							" <td class=\"col3\">Due date</td>\n";
+		}
+	  
+	  foreach (@{$hash->{helper}{TIDS}}) {
+	  	
+	  	if ($i%2==0) {
+	  		$eo="even";
+	  	}
+	  	else {
+	  		$eo="odd";
+	  	}
+	  	
+	  	
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
+	  					"	<td class=\"col1\">\n".
+	  					"		<input class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+	  					"	</td>\n".
+	  					"	<td class=\"col1\">\n".
+	  							"<span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
+	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+	  					"	</td>\n";
+	  	
+	  	if ($showDueDate) {
+	  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
+	  		$cs=4;
+	  	}					
+	  	
+	  	$ret .= "<td class=\"col2\">\n".
+	  					" <a href=\"#\" class=\"wunderlist_delete_".$name."\" data-id=\"".$_."\">\n".
+	  					"		x\n".
+	  					" </a>\n".
+	  					"</td>\n";
+	  					
+	    $ret .= "</tr>\n";
+	    
+	  	$i++;
+	  }
+  
+	  $ret .= "<tr class=\"".$eo."\">";
+	  
+	  
+	  $ret .= "<td colspan=\"".$cs."\">".
+	  				"	<input type=\"hidden\" class=\"wunderlist_name\" id=\"wunderlist_name_".$name."\" value=\"".$name."\" />\n".
+	  				" <input type=\"text\" id=\"newEntry_".$name."\" />\n".
+	  				"</td>";
+	  
+	  $ret .= "</tr>";
+	  
+	  $ret .= "</table></td></tr>\n";
+	  
+	  $ret .= "</table></div>\n";
+	}
+  
+  return $rot.$ret;
 }
 
 sub wunderlist_inArray {

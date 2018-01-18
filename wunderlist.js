@@ -89,53 +89,55 @@
 	}
 
 	$(document).ready(function(){
-		var name = $('#wunderlist_name').val();
-		$('#newEntry_' + name).on('blur keypress',function(e) {
-			if (e.type!='keypress' || e.which==13) {
-				e.preventDefault();
-				var v=wunderlist_encodeParm($(this).val());
-				if (v!="") {
-					wunderlist_sendCommand('set '+ name +' addTask ' + v);
-					$(this).val("");
+		$('.wunderlist_name').each(function() {
+			var name = $(this).val();
+			$('#newEntry_' + name).on('blur keypress',function(e) {
+				if (e.type!='keypress' || e.which==13) {
+					e.preventDefault();
+					var v=wunderlist_encodeParm($(this).val());
+					if (v!="") {
+						wunderlist_sendCommand('set '+ name +' addTask ' + v);
+						$(this).val("");
+					}
 				}
-			}
-		});
-		$('#wunderlist_' + name + '_table').on('click','input[type="checkbox"]',function(e) {
-			var val=$(this).attr('checked');
-			if (!val) {
-				var id=$(this).attr('data-id');
-				wunderlist_sendCommand('set ' + name + ' completeTask ID:'+ id);
-			}
-		});
-		$('#wunderlist_' + name + '_table').on('click','a.wunderlist_delete',function(e) {
-			if (confirm('Are you sure?')) {
-				var id=$(this).attr('data-id');
-				wunderlist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
-			}
-			return false;
-		});
-		$('#wunderlist_' + name + '_table').on('click','span.wunderlist_task_text',function(e) {
-			var id = $(this).attr("data-id");
-			var val=$(this).html();
-			$(this).hide();
-			$("input[data-id='" + id +"']").val(val);
-			$("input[data-id='" + id +"']").show();
-			$("input[data-id='" + id +"']").focus();
-		});
-		$('#wunderlist_' + name + '_table').on('blur keypress','input.wunderlist_input',function(e) {
-			if (e.type!='keypress' || e.which==13) {
-				e.preventDefault();
-				var comp = $(this).prev().html();
+			});
+			$('#wunderlist_' + name + '_table').on('click','input[type="checkbox"]',function(e) {
+				var val=$(this).attr('checked');
+				if (!val) {
+					var id=$(this).attr('data-id');
+					wunderlist_sendCommand('set ' + name + ' completeTask ID:'+ id);
+				}
+			});
+			$('#wunderlist_' + name + '_table').on('click','a.wunderlist_delete',function(e) {
+				if (confirm('Are you sure?')) {
+					var id=$(this).attr('data-id');
+					wunderlist_sendCommand('set ' + name + ' deleteTask ID:'+ id);
+				}
+				return false;
+			});
+			$('#wunderlist_' + name + '_table').on('click','span.wunderlist_task_text',function(e) {
 				var id = $(this).attr("data-id");
-				var val = $(this).val();
-				
+				var val=$(this).html();
 				$(this).hide();
-				$("span.wunderlist_task_text[data-id='" + id +"']").show();
-				if (val != "" && comp!=val) {
-					$("span.wunderlist_task_text[data-id='" + id +"']").html(val);
-					wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+				$("input[data-id='" + id +"']").val(val);
+				$("input[data-id='" + id +"']").show();
+				$("input[data-id='" + id +"']").focus();
+			});
+			$('#wunderlist_' + name + '_table').on('blur keypress','input.wunderlist_input',function(e) {
+				if (e.type!='keypress' || e.which==13) {
+					e.preventDefault();
+					var comp = $(this).prev().html();
+					var id = $(this).attr("data-id");
+					var val = $(this).val();
+					
+					$(this).hide();
+					$("span.wunderlist_task_text[data-id='" + id +"']").show();
+					if (val != "" && comp!=val) {
+						$("span.wunderlist_task_text[data-id='" + id +"']").html(val);
+						wunderlist_sendCommand('set ' + name + ' updateTask ID:'+ id + ' title="' + val + '"');
+					}
 				}
-			}
+			});
 		});
 	});
 }
