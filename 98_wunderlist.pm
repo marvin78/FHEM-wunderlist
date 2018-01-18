@@ -1809,6 +1809,12 @@ sub wunderlist_inArray {
 		Usage:<br /><br />
 		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_Html("&lt;WUNDERLIST-DEVCICENAME&gt;")}</code>
 	</ul>
+	<ul>
+		Defines a simple weblink for all Task lists.
+		<br /><br />
+		Usage:<br /><br />
+		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_AllHtml()}</code>
+	</ul>
 </ul>
 
 =end html
