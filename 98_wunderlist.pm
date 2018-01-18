@@ -1,4 +1,4 @@
-# $Id: 98_wunderlist.pm 3900 2018-01-18 09:13:10Z marvin1978 $
+# $Id: 98_wunderlist.pm 3900 2018-01-18 16:18:10Z marvin1978 $
 
 package main;
 
@@ -11,7 +11,7 @@ use Encode;
 
 #######################
 # Global variables
-my $version = "1.0.1";
+my $version = "1.0.2";
 
 my %gets = (
   "version:noArg"     => "",
