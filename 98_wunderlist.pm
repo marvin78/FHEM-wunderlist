@@ -423,7 +423,7 @@ sub wunderlist_CreateTask($$) {
 		}
 	}
 	else {
-		map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_ErrorDialog === \"function\") wunderlist_ErrorDialog('$title is already in the list')", "")} devspec2array("WEB.*");
+		map {FW_directNotify("#FHEMWEB:$_", "if (typeof wunderlist_ErrorDialog === \"function\") wunderlist_ErrorDialog('$title is already on the list')", "")} devspec2array("WEB.*");
 		wunderlist_ErrorReadings($hash,"duplicate detected");
 	}	
 	
