@@ -11,7 +11,7 @@ use Encode;
 
 #######################
 # Global variables
-my $version = "1.0.2";
+my $version = "1.0.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1547,12 +1547,17 @@ sub wunderlist_Html($;$$) {
   return $ret;
 }
 
-sub wunderlist_AllHtml(;$$) {
-	my ($showDueDate,$showIndent) = @_;
+sub wunderlist_AllHtml(;$$$) {
+	my ($regEx,$showDueDate) = @_;
 	
 	$showDueDate=0 if (!defined($showDueDate));
+	$regEx="" if (!defined($regEx));
 	
-	my @devs = devspec2array("TYPE=wunderlist");
+	my $filter="";
+	
+	$filter.=":FILTER=".$regEx;
+	
+	my @devs = devspec2array("TYPE=wunderlist".$filter);
 	my $ret="";
 	
 	# Javascript
@@ -1805,15 +1810,14 @@ sub wunderlist_inArray {
   <ul>
 		Defines a simple weblink for a Task list.
 		<br /><br />
-		Usage:<br /><br />
 		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_Html("&lt;WUNDERLIST-DEVCICENAME&gt;")}</code>
 	</ul>
 	<br /><br />
 	<ul>
-		Defines a simple weblink for all Task lists.
+		Define a simple weblink for all Task lists.
 		<br /><br />
-		Usage:<br /><br />
 		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_AllHtml()}</code>
+		<code>define &lt;NAME&gt; weblink htmlCode {wunderlist_AllHtml('<REGEX-FILTER>')}</code>
 	</ul>
 </ul>
 
