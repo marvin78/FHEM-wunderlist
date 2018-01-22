@@ -1,4 +1,4 @@
-# $Id: 98_wunderlist.pm 3900 2018-01-18 16:18:10Z marvin1978 $
+# $Id: 98_wunderlist.pm 3960 2018-01-22 10:12:10Z marvin1978 $
 
 package main;
 
@@ -11,7 +11,7 @@ use Encode;
 
 #######################
 # Global variables
-my $version = "1.0.3";
+my $version = "1.1.2";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1477,22 +1477,72 @@ sub wunderlist_Html($;$$) {
   my $ret="";
   
   # Javascript
-  $ret.="<script type=\"text/javascript\" src=\"$FW_ME/pgm2/wunderlist.js\"></script>";
+  $ret.="<script type=\"text/javascript\" src=\"$FW_ME/pgm2/wunderlist.js\"></script>
+  			 <style>
+								<style>
+								.wunderlist_container {
+								    display: block;
+								    padding: 0;
+								}
+								.wunderlist_table {
+								    float: left;
+								    margin-right: 10px;
+								}
+								.sortable-placeholder {
+									background-color: grey;
+								}
+								.wunderlist_col1 {
+									width:32px;
+									text-align:right;
+									padding: 4px 4px 4px 1px!important;
+								}
+								.wunderlist_col1 input {
+									//margin-top:4px;
+								}
+								.wunderlist_move {
+									width:10px;
+									float:left;
+								}
+								.wunderlist_sortit_handler {
+									padding-top: 0px!important;
+								  content: '....';
+								  width: 5px;
+								  height: 20px;
+								  //display: inline-block;
+								  overflow: hidden;
+								  line-height: 5px;
+								  padding: 0px 2px!important;
+								  cursor: move;
+								  vertical-align: middle;
+								  margin-top: -.2em;
+								  margin-right: 0!important;
+								  font-size: 12px;
+								  font-family: sans-serif;
+								  letter-spacing: 1px;
+								  color: #cccccc;
+								  text-shadow: 1px 0 1px black;
+								}
+								.wunderlist_sortit_handler::after {
+								  content: '.. .. .. ..';
+								}
+							</style> 
+						";
   
-  $ret .= "<table class=\"roomoverview\">\n";
+  $ret .= "<table class=\"roomoverview wunderlist_table\">\n";
   
   $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
-  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"wunderlist_".$name."_table\">\n"; 
+  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"wunderlist_".$name."_table\">\n"; 
   
   my $i=1;
   my $eo;
   my $cs=3;
   
   if ($showDueDate) {
-		$ret .= "<tr>\n".
+		$ret .= "<th>\n".
 						" <td class=\"col1\"> </td>\n".
 						" <td class=\"col1\">Task</td>\n".
-						" <td class=\"col3\">Due date</td>\n";
+						" <td class=\"col3\">Due date</td>\n".
+						"</th>\n";
 	}
   
   foreach (@{$hash->{helper}{TIDS}}) {
@@ -1505,13 +1555,14 @@ sub wunderlist_Html($;$$) {
   	}
   	
   	
-  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-  					"	<td class=\"col1\">\n".
+  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
+  					"	<td class=\"col1 wunderlist_col1\">\n".
+  					"		<div class=\"wunderlist_move\"></div>\n".
   					"		<input class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
   					"	</td>\n".
-  					"	<td class=\"col1\">\n".
+  					"	<td class=\"col1 wunderlist_input\">\n".
   							"<span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
-  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
   					"	</td>\n";
   	
   	if ($showDueDate) {
@@ -1520,7 +1571,7 @@ sub wunderlist_Html($;$$) {
   	}					
   	
   	$ret .= "<td class=\"col2\">\n".
-  					" <a href=\"#\" class=\"wunderlist_delete\" data-id=\"".$_."\">\n".
+  					" <a href=\"#\" class=\"wunderlist_delete_".$name."\" data-id=\"".$_."\">\n".
   					"		x\n".
   					" </a>\n".
   					"</td>\n";
@@ -1561,7 +1612,55 @@ sub wunderlist_AllHtml(;$$$) {
 	my $ret="";
 	
 	# Javascript
-	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/wunderlist.js\"></script>";
+	my $rot .= "<script type=\"text/javascript\" src=\"$FW_ME/www/pgm2/wunderlist.js\"></script>
+							<style>
+								.wunderlist_container {
+								    display: block;
+								    padding: 0;
+								}
+								.wunderlist_table {
+								    float: left;
+								    margin-right: 10px;
+								}
+								.sortable-placeholder {
+									background-color: grey;
+								}
+								.wunderlist_col1 {
+									width:32px;
+									text-align:right;
+									padding: 4px 4px 4px 1px!important;
+								}
+								.wunderlist_col1 input {
+									//margin-top:4px;
+								}
+								.wunderlist_move {
+									width:10px;
+									float:left;
+								}
+								.wunderlist_sortit_handler {
+									padding-top: 0px!important;
+								  content: '....';
+								  width: 5px;
+								  height: 20px;
+								  //display: inline-block;
+								  overflow: hidden;
+								  line-height: 5px;
+								  padding: 0px 2px!important;
+								  cursor: move;
+								  vertical-align: middle;
+								  margin-top: -.2em;
+								  margin-right: 0!important;
+								  font-size: 12px;
+								  font-family: sans-serif;
+								  letter-spacing: 1px;
+								  color: #cccccc;
+								  text-shadow: 1px 0 1px black;
+								}
+								.wunderlist_sortit_handler::after {
+								  content: '.. .. .. ..';
+								}
+							</style>
+					";
 	
 	my $r=0;
 	
@@ -1569,6 +1668,8 @@ sub wunderlist_AllHtml(;$$$) {
 	my $width = 100/$count;
 	
 	my $style="float:left;margin-right:10px;width:".$width;
+	
+	$ret .= "<div class=\"wunderlist_container\">\n";
 	
 	foreach my $name (@devs) {
 		
@@ -1581,10 +1682,10 @@ sub wunderlist_AllHtml(;$$$) {
 	  	$style="float:none;";	
 	  }	
 	    
-	  $ret .= "<div style=\"".$style."\"><table class=\"roomoverview\">\n";
+	  $ret .= "<table class=\"roomoverview wunderlist_table\">\n";
 	  
 	  $ret .= "<tr><td colspan=\"3\"><div class=\"devType\">".$name."</div></td></tr>";
-	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide\" id=\"wunderlist_".$name."_table\">\n"; 
+	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"wunderlist_".$name."_table\">\n"; 
 	  
 	  my $i=1;
 	  my $eo;
@@ -1595,6 +1696,7 @@ sub wunderlist_AllHtml(;$$$) {
 							" <td class=\"col1\"> </td>\n".
 							" <td class=\"col1\">Task</td>\n".
 							" <td class=\"col3\">Due date</td>\n";
+							"</th>\n";
 		}
 	  
 	  foreach (@{$hash->{helper}{TIDS}}) {
@@ -1607,14 +1709,15 @@ sub wunderlist_AllHtml(;$$$) {
 	  	}
 	  	
 	  	
-	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"".$eo."\">\n".
-	  					"	<td class=\"col1\">\n".
-	  					"		<input class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
-	  					"	</td>\n".
-	  					"	<td class=\"col1\">\n".
-	  							"<span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
-	  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
-	  					"	</td>\n";
+	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
+  					"	<td class=\"col1 wunderlist_col1\">\n".
+  					"		<div class=\"wunderlist_move\"></div>\n".
+  					"		<input class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
+  					"	</td>\n".
+  					"	<td class=\"col1 wunderlist_input\">\n".
+  							"<span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
+  							"<input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
+  					"	</td>\n";
 	  	
 	  	if ($showDueDate) {
 	  		$ret .= "<td class=\"col3\">".$hash->{helper}{DUE_DATE}{$_}."</td>\n";
@@ -1644,8 +1747,10 @@ sub wunderlist_AllHtml(;$$$) {
 	  
 	  $ret .= "</table></td></tr>\n";
 	  
-	  $ret .= "</table></div>\n";
+	  $ret .= "</table>\n";
 	}
+	
+	$ret .= "</div>\n";
   
   return $rot.$ret;
 }
