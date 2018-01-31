@@ -11,7 +11,7 @@ use Encode;
 
 #######################
 # Global variables
-my $version = "1.1.2";
+my $version = "1.1.3";
 
 my %gets = (
   "version:noArg"     => "",
@@ -972,7 +972,10 @@ sub wunderlist_GetListPositionsCallback($$$){
 	}
 	
 	## sort Tasks by wunderlist order if set
-	wunderlist_sortWunderlist($hash) if (AttrVal($name,"sortTasks",0) == 2);
+	if (AttrVal($name,"sortTasks",0) == 2) {
+		RemoveInternalTimer($hash,"wunderlist_sortWunderlist");
+		InternalTimer(gettimeofday()+0.2, "wunderlist_sortWunderlist", $hash, 0); ## loop with Interval
+	}
 	
 	readingsEndUpdate( $hash, 1 );
 	
@@ -1545,7 +1548,12 @@ sub wunderlist_Html($;$$) {
 						"</th>\n";
 	}
   
-  foreach (@{$hash->{helper}{TIDS}}) {
+  my @arr;
+  
+  @arr = @{$hash->{helper}{POSITIONS}} if (AttrVal($name,"sortTasks",0) == 2);
+  @arr = @{$hash->{helper}{TIDS}} if (AttrVal($name,"sortTasks",0) == 0);
+  
+  foreach (@arr) {
   	
   	if ($i%2==0) {
   		$eo="even";
@@ -1688,25 +1696,30 @@ sub wunderlist_AllHtml(;$$$) {
 	  $ret .= "<tr><td colspan=\"3\"><table class=\"block wide sortable\" id=\"wunderlist_".$name."_table\">\n"; 
 	  
 	  my $i=1;
-	  my $eo;
+	  my $eo="odd";
 	  my $cs=3;
 	  
 	  if ($showDueDate) {
 			$ret .= "<tr>\n".
 							" <td class=\"col1\"> </td>\n".
 							" <td class=\"col1\">Task</td>\n".
-							" <td class=\"col3\">Due date</td>\n";
+							" <td class=\"col3\">Due date</td>\n".
 							"</th>\n";
 		}
+		
+		my @arr;
 	  
-	  foreach (@{$hash->{helper}{TIDS}}) {
+	  @arr = @{$hash->{helper}{POSITIONS}} if (AttrVal($name,"sortTasks",0) == 2 && $hash->{helper}{POSITIONS});
+	  @arr = @{$hash->{helper}{TIDS}} if (AttrVal($name,"sortTasks",0) == 0 && $hash->{helper}{TIDS});
+	  
+	  foreach (@arr) {
+	  	
+	  	$eo="odd";
 	  	
 	  	if ($i%2==0) {
 	  		$eo="even";
 	  	}
-	  	else {
-	  		$eo="odd";
-	  	}
+
 	  	
 	  	
 	  	$ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit ".$eo."\">\n".
