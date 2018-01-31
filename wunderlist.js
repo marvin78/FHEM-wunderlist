@@ -162,7 +162,7 @@
 				var val=$(this).attr('checked');
 				if (!val) {
 					var id=$(this).attr('data-id');
-					wunderlist_sendCommand('set ' + name + ' closeTask ID:'+ id);
+					wunderlist_sendCommand('set ' + name + ' completeTask ID:'+ id);
 				}
 			});
 			$('#wunderlist_' + name + '_table').on('click','a.wunderlist_delete_'+name,function(e) {
