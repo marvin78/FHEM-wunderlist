@@ -1469,8 +1469,10 @@ sub wunderlist_RestartGetTimer($) {
 	return undef;
 }
 
+# old variant
 sub wunderlist_AllHtml(;$$) {
 	my ($regEx,$showDueDate) = @_;
+	
 	return wunderlist_Html($regEx,$showDueDate);
 }
 
