@@ -11,7 +11,7 @@ use Encode;
 
 #######################
 # Global variables
-my $version = "1.1.5";
+my $version = "1.1.6";
 
 my %gets = (
   "version:noArg"     => "",
@@ -1330,6 +1330,22 @@ sub wunderlist_Attr($@) {
     InternalTimer(gettimeofday()+1, "wunderlist_GetTasks", $hash, 0) if (!IsDisabled($name) && IsDisabled($name) != 3);
   }
   
+  if ($attrName eq "language") {
+    # in any attribute redefinition readjust language
+    if ($cmd eq "set") {
+      return "$name: language can only be DE or EN" if ($attrVal !~ /(^DE|EN)$/);
+      if( $attrVal eq "DE") {
+        $wunderlist_tt = \%wunderlist_transtable_DE;
+      }
+      else{
+        $wunderlist_tt = \%wunderlist_transtable_EN;
+      }
+    }
+    else {
+      $wunderlist_tt = \%wunderlist_transtable_EN;
+    }
+  }
+  
   if ($attrName eq "listDivider") {
     wunderlist_RestartGetTimer($hash);
   }
@@ -1746,15 +1762,13 @@ sub wunderlist_Html(;$$$) {
         }
         
         my $ind=0;
-
-        my $indent=$hash->{helper}{INDENT}{$_};
         
         $ret .= "<tr id=\"".$name."_".$_."\" data-data=\"true\" data-line-id=\"".$_."\" class=\"sortit wunderlist_data ".$eo."\">\n".
                 " <td class=\"col1 wunderlist_col1\">\n".
                 "   <div class=\"wunderlist_move\"></div>\n".
                 "   <input title=\"".$wunderlist_tt->{'check'}."\" class=\"wunderlist_checkbox_".$name."\" type=\"checkbox\" id=\"check_".$_."\" data-id=\"".$_."\" />\n".
                 " </td>\n".
-                " <td class=\"col1 wunderlist_input wunderlist_indent_".$indent."\">\n".
+                " <td class=\"col1 wunderlist_input\">\n".
                 "   <span class=\"wunderlist_task_text\" data-id=\"".$_."\">".$hash->{helper}{TITLE}{$_}."</span>\n".
                 "   <input type=\"text\" data-id=\"".$_."\" style=\"display:none;\" class=\"wunderlist_input_".$name."\" value=\"".$hash->{helper}{TITLE}{$_}."\" />\n".
                 " </td>\n";
